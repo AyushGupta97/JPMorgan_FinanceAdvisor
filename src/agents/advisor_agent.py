@@ -23,7 +23,7 @@ class AdvisorAgent:
             user_context = "\nUser follow-up questions:\n" + "\n".join(user_questions)
 
         prompt = f"""
-        You are a financial advisor. Generate 3-5 clarifying questions based on the client profile and any follow-up questions.
+        You are a financial advisor. Generate 1-3 clarifying questions based on the client profile and any follow-up questions.
         Client Profile:
         {json.dumps(profile)}
         Risk Aversion: {risk}
@@ -76,17 +76,17 @@ class AdvisorAgent:
         if user_questions:
             user_context = "\nUser follow-up questions:\n" + "\n".join(user_questions)
         
-        prompt = PromptTemplate.from_template("""
+        prompt = f"""
         You are a senior financial advisor preparing tasks for an Analyst Agent.
 
         Client Profile:
-        {profile}
+        {json.dumps(profile, indent=2)}
 
         Clarifying Q&A:
-        {qa_pairs}
+        {json.dumps(transcript, indent=2)}
                                               
         User Questions:
-        {user_questions}
+        {user_context}
 
         Output STRICTLY as a list of JSON and make sure to formart it correctly
         
@@ -96,12 +96,12 @@ class AdvisorAgent:
         - task_type (research, compare, summarize) - these are the only task types allowed
         - context (brief string explaining why this task is needed)
         STRICTLY Provide the tasks as a JSON array, without any additional commentary or text outside the array
-        ]""")
-        response = self.llm.invoke(prompt.format(
-            profile=json.dumps(profile, indent=2),
-            qa_pairs=json.dumps(transcript, indent=2),
-            user_questions=user_context
-        ))
+
+        Example Tasks:
+        {json.dumps(default_tasks, indent=2)}
+        ]
+        """
+        response = self.llm.invoke(prompt)
         print(response)
         try:
             match = re.search(r"\[.*\]", response, re.DOTALL)
