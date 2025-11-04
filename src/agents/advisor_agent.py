@@ -11,20 +11,27 @@ class AdvisorAgent:
         self.llm = OllamaLLM(model=model)
         self.transcript: List[Dict[str, Any]] = []
 
+
     def get_client_profile(self):
         return self.client.profile.dict()
 
-    def generate_clarifying_questions(self, profile: Dict[str, Any]) -> List[str]:
+
+    def generate_clarifying_questions(self, profile: Dict[str, Any], user_questions: list = None) -> list:
         risk = profile.get("risk_aversion", "medium")
-        prompt = PromptTemplate.from_template(
-        """
-        You are a financial advisor. Generate 1-3 clarifying questions based on the client profile.
+        user_context = ""
+        if user_questions:
+            user_context = "\nUser follow-up questions:\n" + "\n".join(user_questions)
+
+        prompt = f"""
+        You are a financial advisor. Generate 3-5 clarifying questions based on the client profile and any follow-up questions.
         Client Profile:
-        {profile}
+        {json.dumps(profile)}
         Risk Aversion: {risk}
+        {user_context}
         Respond in JSON array of questions only.
-        """)
-        response = self.llm.invoke(prompt.format(profile=json.dumps(profile), risk=risk))
+        """
+
+        response = self.llm.invoke(prompt)
         import re
         try:
             match = re.search(r"\[.*\]", response, re.DOTALL)
@@ -40,6 +47,8 @@ class AdvisorAgent:
             ]
         return questions
 
+
+
     def ask_client(self, questions: List[str]) -> List[Dict[str, str]]:
         qa_pairs = []
         for q in questions:
@@ -48,7 +57,8 @@ class AdvisorAgent:
         self.transcript.extend(qa_pairs)
         return qa_pairs
 
-    def generate_analyst_tasks(self, profile: Dict[str, Any], transcript: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+
+    def generate_analyst_tasks(self, profile: Dict[str, Any], transcript: List[Dict[str, str]], user_questions: list = None) -> List[Dict[str, Any]]:
         default_tasks = [
                 {
                     "task_description": "Research medium-risk index funds.",
@@ -62,6 +72,10 @@ class AdvisorAgent:
                 }
             ]
         
+        user_context = ""
+        if user_questions:
+            user_context = "\nUser follow-up questions:\n" + "\n".join(user_questions)
+        
         prompt = PromptTemplate.from_template("""
         You are a senior financial advisor preparing tasks for an Analyst Agent.
 
@@ -70,6 +84,9 @@ class AdvisorAgent:
 
         Clarifying Q&A:
         {qa_pairs}
+                                              
+        User Questions:
+        {user_questions}
 
         Output STRICTLY as a list of JSON and make sure to formart it correctly
         
@@ -82,7 +99,8 @@ class AdvisorAgent:
         ]""")
         response = self.llm.invoke(prompt.format(
             profile=json.dumps(profile, indent=2),
-            qa_pairs=json.dumps(transcript, indent=2)
+            qa_pairs=json.dumps(transcript, indent=2),
+            user_questions=user_context
         ))
         print(response)
         try:
@@ -96,6 +114,7 @@ class AdvisorAgent:
             tasks = default_tasks
 
         return tasks
+
 
     def generate_final_advice(self, task_results: List[Dict[str, str]]) -> str:
         profile = self.client.profile.dict()

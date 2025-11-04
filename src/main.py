@@ -12,35 +12,59 @@ analyst = AnalystAgent()
 
 profile = advisor.get_client_profile()
 print("=== Client Profile ===")
-
 print(json.dumps(profile, indent=2))
-questions = advisor.generate_clarifying_questions(profile)
-qa_pairs = advisor.ask_client(questions)
 
-tasks_list = advisor.generate_analyst_tasks(profile, qa_pairs)  
-task_results = []
-for task in tasks_list:
-    print(f"Executing task: {task}")
-    result = analyst.execute_task(task)
-    task_results.append(result)
+conversation_history = {
+    "qa_pairs": [],
+    "task_results": [],
+    "user_questions": []
+}
 
-final_advice = advisor.generate_final_advice(task_results)
+conversation_active = True
 
-session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-knowledge_store.save_session(
-    client_name=client.profile.name,
-    session_id=session_id,
-    profile=profile,
-    qa_transcript=qa_pairs,
-    tasks=task_results,
-    final_recommendation=final_advice
-)
-
-print("=== Profile ===")
-print(json.dumps(profile, indent=2))
-print("\n=== QA Pairs ===")
-print(json.dumps(qa_pairs, indent=2))
-print("\n=== Task Results ===")
-print(json.dumps(task_results, indent=2))
-print("\n=== Final Advice ===")
-print(final_advice)
+while conversation_active:
+    user_input = input("\nDo you have a follow up question or info for the Advisor? (leave blank if none): ").strip()
+    if user_input:
+        conversation_history["user_questions"].append(user_input)
+    
+    questions = advisor.generate_clarifying_questions(
+        profile,
+        user_questions=conversation_history["user_questions"]
+    )
+    new_qa_pairs = advisor.ask_client(questions)
+    conversation_history["qa_pairs"].extend(new_qa_pairs)
+    
+    tasks_list = advisor.generate_analyst_tasks(
+        profile,
+        conversation_history["qa_pairs"],
+        user_questions=conversation_history["user_questions"]
+    )
+    
+    new_task_results = []
+    for task in tasks_list:
+        print(f"Executing task: {task}")
+        result = analyst.execute_task(task)
+        new_task_results.append(result)
+    conversation_history["task_results"].extend(new_task_results)
+    
+    final_advice = advisor.generate_final_advice(conversation_history["task_results"])
+    
+    session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    knowledge_store.save_session(
+        client_name=client.profile.name,
+        session_id=session_id,
+        profile=profile,
+        qa_transcript=conversation_history["qa_pairs"],
+        tasks=conversation_history["task_results"],
+        final_recommendation=final_advice
+    )
+    
+    print("\n=== Final Advice ===")
+    print(final_advice)
+    
+    user_continue = input("\nDo you want to continue the conversation? (yes/no): ").strip().lower()
+    if user_continue not in ["yes", "y"]:
+        conversation_active = False
+        print("Conversation ended. Session saved.")
+    else:
+        print("\nContinuing conversation with accumulated history and user questions...\n")

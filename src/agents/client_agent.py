@@ -80,7 +80,7 @@ class ClientAgent:
         print("Question:", question)
         return input("Client's answer: ")
     
-# Demo purpose to see the generated profile
+
 if __name__ == "__main__":
     print("=== LLM Generated Profile ===")
     agent = ClientAgent(mode="llm")

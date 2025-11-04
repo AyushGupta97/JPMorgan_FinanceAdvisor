@@ -39,7 +39,9 @@ JPMorgan_FinanceAdvisor/
    source .venv/bin/activate
    ```
 
-3. Install dependencies:
+3. Install Ollama https://ollama.com/download
+
+4. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -52,23 +54,10 @@ JPMorgan_FinanceAdvisor/
 
 2. Follow the prompts to interact with the agents.
 
-## Agents
-### Client Agent
-- Generates a dummy client profile using an LLM.
-- Attributes include age, risk aversion, assets, and investments.
 
-### Advisor Agent
-- Defines tasks for the analyst based on the client's profile.
-- Acts as the sole intermediary between the client and the analyst.
-
-### Analyst Agent
-- Fetches information from the internet and the knowledge store.
-- Uses DuckDuckGo for real-time searches.
-
-## Tools
-### Knowledge Store
-- Built using FAISS for similarity search.
-- Stores and retrieves data relevant to financial analysis.
-
-### Internet Search
-- Uses DuckDuckGoSearchRun from LangChain to perform searches.
+## Areas of Improvement
+1. Using a larger LLM with larger context window
+2. Experimenting with a LLM fine tuned on financial data
+3. Integrate different web api for data sources, such as yahoo finance for stock or news API
+4. Restructure the knowledge store on different attributes other than just name
+5. Define rule based prompting, example: if user is interested in stocks investment then define prompt accordingly or based on client risk aversion level

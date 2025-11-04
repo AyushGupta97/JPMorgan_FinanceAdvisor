@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import PromptTemplate
-from ..tools.web_search import InternetSearchTool
+from src.tools.web_search import InternetSearchTool
 import json
 
 class AnalystAgent:
