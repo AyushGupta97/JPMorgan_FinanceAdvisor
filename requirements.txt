@@ -1,0 +1,8 @@
+pydantic
+langchain
+langchain-core
+langchain-ollama
+langchain-community
+ddgs
+faiss-cpu
+sentence-transformers
