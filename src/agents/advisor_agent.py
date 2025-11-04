@@ -16,8 +16,9 @@ class AdvisorAgent:
 
     def generate_clarifying_questions(self, profile: Dict[str, Any]) -> List[str]:
         risk = profile.get("risk_aversion", "medium")
-        prompt = PromptTemplate.from_template("""
-        You are a financial advisor. Generate 3-5 clarifying questions based on the client profile.
+        prompt = PromptTemplate.from_template(
+        """
+        You are a financial advisor. Generate 1-3 clarifying questions based on the client profile.
         Client Profile:
         {profile}
         Risk Aversion: {risk}
